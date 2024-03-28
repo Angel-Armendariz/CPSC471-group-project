@@ -11,7 +11,7 @@
 - Evan Heidebrink: heidebrinkevan@csu.fullerton.edu
 - Angel Armendariz: angelarmendariz@csu.fullerton.edu
 - Jared Olalde: jolalde@csu.fullerton.edu
-- Trung Tran:
+- Trung Tran: trungqt2@csu.fullerton.edu
 - Brandon Struble:
 
 ## Technologies
