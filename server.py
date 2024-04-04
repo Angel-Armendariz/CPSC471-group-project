@@ -3,8 +3,8 @@ import os
 import threading
 import logging
 
-# Setting up basic logging for the server to log information and errors
-logging.basicConfig(level=logging.INFO)
+# Setting up advanced logging for the server
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Hardcoded users dictionary for authentication purposes
 users = {"user1": "password1", "admin": "admin"}
@@ -85,14 +85,25 @@ def list_directory_contents(control_conn):
         logging.error(f"Error listing directory: {e}")
         control_conn.send(f"ERROR: {str(e)}\n".encode())
 
-# Function to change the current working directory on the server
+# Enhanced function to change the current working directory on the server
 def change_directory(control_conn, path):
     try:
         os.chdir(path)
-        control_conn.send(b"Directory changed successfully.\n")
+        current_path = os.getcwd()  # Get the current directory after change
+        response_message = f"Directory changed successfully. New directory: {current_path}\n"
+        control_conn.send(response_message.encode())
+    except FileNotFoundError:
+        error_msg = "ERROR: Directory not found.\n"
+        control_conn.send(error_msg.encode())
+        logging.error(error_msg.strip())
+    except PermissionError:
+        error_msg = "ERROR: Permission denied.\n"
+        control_conn.send(error_msg.encode())
+        logging.error(error_msg.strip())
     except Exception as e:
-        logging.error(f"Error changing directory: {e}")
-        control_conn.send(f"ERROR: {str(e)}\n".encode())
+        error_msg = f"ERROR: {str(e)}\n"
+        control_conn.send(error_msg.encode())
+        logging.error(f"Unhandled error changing directory: {e}")
 
 # Main function to handle incoming client connections and commands
 def handle_client(connection):
