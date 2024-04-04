@@ -2,12 +2,14 @@ import socket
 import os
 import threading
 import logging
+import bcrypt
 
 # Setting up advanced logging for the server
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Hardcoded users dictionary for authentication purposes
-users = {"user1": "password1", "admin": "admin"}
+users = {"user1": b'$2b$12$YtfrR5J4rcKVIhvZQVrKhu/XaB804ntd7OQNnHCBEawH5ldWj8zPe', 
+         "admin": b'$2b$12$Y6m45ZdH9pNrTk.lkQjIv.rr9d3r/oQnzaMSIZ6K3i43BlYcfZFiO'}
 
 # Function to authenticate users based on the 'users' dictionary
 def authenticate(connection):
@@ -17,13 +19,13 @@ def authenticate(connection):
     password = connection.recv(1024).decode().strip()
     
     # Checking if the provided credentials match any in the 'users' dictionary
-    if username in users and users[username] == password:
+    if username in users and bcrypt.checkpw(password.encode(), users[username]):
         connection.send(b"Authentication successful.\n")
         return True
     else:
         connection.send(b"Authentication failed.\n")
         return False
-
+    
 # Function to send file data to the client
 def send_file_data(control_conn, file_name):
     try:

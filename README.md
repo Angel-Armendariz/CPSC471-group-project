@@ -22,18 +22,56 @@
 
 ## Instructions
 
-Start server: `python3 server.py`
+Dependencies:
 
-Start client: `python3 client.py`
+```bash
+pip install bcrypt
+```
 
-Login with admin credentials (Username: admin, Password: admin)
+Start server:
+
+```bash
+python3 server.py
+```
+
+Start client:
+
+```bash
+python3 client.py
+```
+
+For admin access:
+
+- Username: `admin`
+- Password: `admin`
+
+For user access:
+
+- Username: `user1`
+- Password: `password1`
 
 ### FTP Client Commands
 
-ftp> get &lt;filename&gt; - downloads &lt;filename&gt; from the server
+Download a file from the server
 
-ftp> put &lt;filename&gt; - uploads &lt;filename&gt; to the server
+```bash
+ftp> get <filename>
+```
 
-ftp> ls - lists files on the server
+Upload a file to the server
 
-ftp> quit - disconnects from the server and exits
+```bash
+ftp> put <filename>
+```
+
+List files on the server
+
+```bash
+ftp> ls
+```
+
+Disconnect from the server and exit
+
+```bash
+ftp> quit
+```
