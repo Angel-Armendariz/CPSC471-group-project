@@ -7,7 +7,7 @@ import bcrypt
 # Setting up advanced logging for the server
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Hardcoded users dictionary for authentication purposes
+# Hardcoded users dictionary for authentication purposes (using password hashes)
 users = {"user1": b'$2b$12$YtfrR5J4rcKVIhvZQVrKhu/XaB804ntd7OQNnHCBEawH5ldWj8zPe', 
          "admin": b'$2b$12$Y6m45ZdH9pNrTk.lkQjIv.rr9d3r/oQnzaMSIZ6K3i43BlYcfZFiO'}
 
@@ -20,9 +20,11 @@ def authenticate(connection):
     
     # Checking if the provided credentials match any in the 'users' dictionary
     if username in users and bcrypt.checkpw(password.encode(), users[username]):
+        logging.info(f"Authentication successful for user '{username}'")
         connection.send(b"Authentication successful.\n")
         return True
     else:
+        logging.warning(f"Authentication failed for user '{username}'")
         connection.send(b"Authentication failed.\n")
         return False
     
@@ -47,6 +49,7 @@ def send_file_data(control_conn, file_name):
             control_conn.send(b"File transfer completed successfully.\n")
             conn.close()
             data_socket.close()
+            logging.info(f"File transfer completed successfully.")
     except FileNotFoundError:
         control_conn.send(b"ERROR: File not found.\n")
     except PermissionError:
@@ -83,6 +86,7 @@ def list_directory_contents(control_conn):
     try:
         files = "\n".join(os.listdir('.'))
         control_conn.send(f"{files}\n".encode())
+        logging.info(f"Listed directory contents successfully.")
     except Exception as e:
         logging.error(f"Error listing directory: {e}")
         control_conn.send(f"ERROR: {str(e)}\n".encode())
@@ -94,6 +98,7 @@ def change_directory(control_conn, path):
         current_path = os.getcwd()  # Get the current directory after change
         response_message = f"Directory changed successfully. New directory: {current_path}\n"
         control_conn.send(response_message.encode())
+        logging.info(f"Directory changed successfully. New directory: {current_path}")
     except FileNotFoundError:
         error_msg = "ERROR: Directory not found.\n"
         control_conn.send(error_msg.encode())
