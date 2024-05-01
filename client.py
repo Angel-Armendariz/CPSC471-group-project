@@ -24,7 +24,7 @@ def authenticate(control_socket):
     # Return True if authentication was successful, False otherwise
     return "successful" in response
 
-# Function to send a file to the server
+# Function to send a file to the server using the "put" command
 def send_file(control_socket, file_name, server_ip, port):
     try:
         # Open the file to be sent and create a new socket for the data connection
@@ -39,7 +39,7 @@ def send_file(control_socket, file_name, server_ip, port):
     finally:
         data_socket.close()  # Ensure the data socket is closed after the operation
 
-# Function to receive a file from the server
+# Function to receive a file from the server using "get" command
 def receive_file(control_socket, file_name, server_ip, port):
     data_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     data_socket.connect((server_ip, int(port)))  # Connect to the server using the provided port
@@ -49,13 +49,17 @@ def receive_file(control_socket, file_name, server_ip, port):
             if not data:
                 break  # End of file transfer
             file.write(data)  # Write received content to file
-    print("File has been received successfully.")
+
+    # I THINK THE ISSUE FALLS SOMEWHERE IN THIS REGION
+    
     data_socket.close()  # Ensure the data socket is closed after the operation
+    print("File has been received successfully.")
+    control_socket.send(b"ACK")  # Send acknowledgment to the server
 
 # Function to handle commands input by the user
 def handle_commands(control_socket):
     while True:
-        command = input("ftp> ").strip()  # Prompt for input
+        command = input("\nftp> ").strip()  # Prompt for input
         if not command:
             continue  # Skip empty commands
 
@@ -76,6 +80,11 @@ def handle_commands(control_socket):
             elif command.startswith("put "):
                 file_name = command.split(" ", 1)[1]  # Extract the file name from the command
                 send_file(control_socket, file_name, SERVER_IP, int(port))  # Initiate file send
+
+        elif response.startswith("ls "):  # Check for directory contents response
+            print("Contents of directory:")
+            print(response, end="")  # Print directory contents
+
         else:
             print(response, end="")  # Print response for non-file transfer commands
 

@@ -46,9 +46,14 @@ def send_file_data(control_conn, file_name):
             # Reading and sending the file content in chunks
             while chunk := file.read(1024):
                 conn.send(chunk)
-            control_conn.send(b"File transfer completed successfully.\n")
             conn.close()
             data_socket.close()
+
+            # I THINK THE ISSUE FALLS SOMEWHERE IN THIS REGION
+            
+            control_conn.send(b"File transfer completed successfully.\n")
+            control_conn.recv(1024)  # Reading acknowledgement from the client
+            
             logging.info(f"File transfer completed successfully.")
     except FileNotFoundError:
         control_conn.send(b"ERROR: File not found.\n")
@@ -91,27 +96,6 @@ def list_directory_contents(control_conn):
         logging.error(f"Error listing directory: {e}")
         control_conn.send(f"ERROR: {str(e)}\n".encode())
 
-# Enhanced function to change the current working directory on the server
-def change_directory(control_conn, path):
-    try:
-        os.chdir(path)
-        current_path = os.getcwd()  # Get the current directory after change
-        response_message = f"Directory changed successfully. New directory: {current_path}\n"
-        control_conn.send(response_message.encode())
-        logging.info(f"Directory changed successfully. New directory: {current_path}")
-    except FileNotFoundError:
-        error_msg = "ERROR: Directory not found.\n"
-        control_conn.send(error_msg.encode())
-        logging.error(error_msg.strip())
-    except PermissionError:
-        error_msg = "ERROR: Permission denied.\n"
-        control_conn.send(error_msg.encode())
-        logging.error(error_msg.strip())
-    except Exception as e:
-        error_msg = f"ERROR: {str(e)}\n"
-        control_conn.send(error_msg.encode())
-        logging.error(f"Unhandled error changing directory: {e}")
-
 # Main function to handle incoming client connections and commands
 def handle_client(connection):
     if not authenticate(connection):
@@ -133,8 +117,9 @@ def handle_client(connection):
                 receive_file_data(connection, args[1])
             elif cmd == 'ls':
                 list_directory_contents(connection)
-            elif cmd == 'cd' and len(args) == 2:
-                change_directory(connection, args[1])
+            # we cant even make a directory so remove?
+            # elif cmd == 'cd' and len(args) == 2:
+            #     change_directory(connection, args[1])
             elif cmd == 'quit':
                 break
             else:
