@@ -1,27 +1,36 @@
+import sys
 import socket
 import select
+#SERVER_IP = "127.0.0.1"
+#SERVER_PORT = 12000
+SERVER_IP = sys.argv[1]
+SERVER_PORT = int(sys.argv[2])
 
-# Server IP and port for the control connection
-SERVER_IP = "127.0.0.1"
-SERVER_PORT = 12000
+def main():
+    if len(sys.argv) != 3:
+        print("Usage: python client.py <SERVER_IP> <PORT>")
+        sys.exit(1)
+    
+    SERVER_IP = sys.argv[1]
+    SERVER_PORT = int(sys.argv[2])
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as control_socket:
+        control_socket.connect((SERVER_IP, SERVER_PORT))
+        if authenticate(control_socket):
+            handle_commands(control_socket)
+        else:
+            print("Authentication failed. Exiting...")
 
 # Function to authenticate the user with the server
 def authenticate(control_socket):
-    # Receive and print the prompt for the username, then send the input username
     print(control_socket.recv(1024).decode(), end="")
     username = input()
     control_socket.send(username.encode())
-    
-    # Receive and print the prompt for the password, then send the input password
     print(control_socket.recv(1024).decode(), end="")
     password = input()
     control_socket.send(password.encode())
-    
-    # Receive and print the server's authentication response
     response = control_socket.recv(1024).decode()
-    print(response, end="")
-    
-    # Return True if authentication was successful, False otherwise
+    print(response)
     return "successful" in response
 
 # Function to send a file to the server
@@ -107,14 +116,6 @@ def clear_residual_data(control_socket):
     finally:
         control_socket.setblocking(1)  # Reset to blocking mode
 
-# Main function to start the client and handle authentication and command processing
-def main():
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as control_socket:
-        control_socket.connect((SERVER_IP, SERVER_PORT))  # Connect to the server control port
-        if authenticate(control_socket):  # Proceed if authentication is successful
-            handle_commands(control_socket)  # Enter the command handling loop
-        else:
-            print("Authentication failed. Exiting...")  # Exit if authentication fails
 
 if __name__ == "__main__":
     main()

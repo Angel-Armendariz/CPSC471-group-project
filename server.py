@@ -1,10 +1,11 @@
+import sys
 import socket
 import os
 import threading
 import logging
 import bcrypt
 
-# Setting up advanced logging for the server
+# Initialize logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Hardcoded users dictionary for authentication purposes (using password hashes)
@@ -145,24 +146,26 @@ def handle_client(connection):
     
     connection.close()
 
-# Function to start the FTP server and listen for incoming connections
 def start_server(port):
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind(('', port))
     server_socket.listen(5)
     logging.info(f"FTP Server started on port {port}. Waiting for connections...")
-
+    
     try:
         while True:
             connection, addr = server_socket.accept()
             logging.info(f"Connected by {addr}")
-            thread = threading.Thread(target=handle_client, args=(connection,))
-            thread.start()
+            threading.Thread(target=handle_client, args=(connection,)).start()
     except KeyboardInterrupt:
         logging.info("Server is shutting down...")
     finally:
         server_socket.close()
 
 if __name__ == "__main__":
-    PORT = 12000
+    if len(sys.argv) != 2:
+        print("Usage: python server.py <PORT>")
+        sys.exit(1)
+    
+    PORT = int(sys.argv[1])
     start_server(PORT)
