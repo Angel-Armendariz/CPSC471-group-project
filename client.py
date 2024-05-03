@@ -1,5 +1,5 @@
 import socket
-import argparse
+import select
 
 # Server IP and port for the control connection
 SERVER_IP = "127.0.0.1"
@@ -52,7 +52,6 @@ def receive_file(control_socket, file_name, server_ip, port):
     print("File has been received successfully.")
     data_socket.close()  # Ensure the data socket is closed after the operation
 
-# Function to handle commands input by the user
 def handle_commands(control_socket):
     while True:
         command = input("ftp> ").strip()  # Prompt for input
@@ -65,19 +64,48 @@ def handle_commands(control_socket):
             break
 
         control_socket.send(command.encode())  # Send command to the server
+        
+        # Read and process the full response for the current command
+        full_response = ""
+        while True:
+            ready = select.select([control_socket], [], [], 0.5)  # Check if data is ready to be read
+            if ready[0]:
+                part = control_socket.recv(4096).decode()
+                full_response += part
+                if len(part) < 4096:  # Less data might indicate end of message
+                    break
+            else:
+                # No more data to read for this command
+                break
 
-        # Handle file transfer commands differently since they require data connection
-        response = control_socket.recv(4096).decode()
-        if "PORT" in response:  # Server response contains the port for the data connection
-            _, port = response.split()
+        # Handle the response based on its type or content
+        if "PORT" in full_response:  # Server response contains the port for the data connection
+            _, port = full_response.split()
             if command.startswith("get "):
-                file_name = command.split(" ", 1)[1]  # Extract the file name from the command
-                receive_file(control_socket, file_name, SERVER_IP, int(port))  # Initiate file receive
+                file_name = command.split(" ", 1)[1]
+                receive_file(control_socket, file_name, SERVER_IP, int(port))
             elif command.startswith("put "):
-                file_name = command.split(" ", 1)[1]  # Extract the file name from the command
-                send_file(control_socket, file_name, SERVER_IP, int(port))  # Initiate file send
+                file_name = command.split(" ", 1)[1]
+                send_file(control_socket, file_name, SERVER_IP, int(port))
         else:
-            print(response, end="")  # Print response for non-file transfer commands
+            print(full_response, end="")  # Print response for non-file transfer commands
+
+        # Clear any residual data in the buffer after processing the response
+        clear_residual_data(control_socket)
+
+def clear_residual_data(control_socket):
+    """Function to clear any residual data from socket buffer."""
+    control_socket.setblocking(0)  # Set non-blocking mode
+    try:
+        while True:
+            if control_socket.recv(4096):
+                continue  # Keep reading if data is present
+            break  # Exit if no data is present
+    except BlockingIOError:
+        # No more data to read
+        pass
+    finally:
+        control_socket.setblocking(1)  # Reset to blocking mode
 
 # Main function to start the client and handle authentication and command processing
 def main():
