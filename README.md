@@ -31,14 +31,22 @@ pip install bcrypt
 Start server:
 
 ```bash
-python3 server.py
+python3 server.py <port>
+```
+
+_Example: python3 server.py 12000_
+
+```bash
+python3 server.py <port>
 ```
 
 Start client:
 
 ```bash
-python3 client.py
+python3 client.py <IP address> <port>
 ```
+
+_Example: python3 client.py 127.0.0.1 12000_
 
 For admin access:
 
