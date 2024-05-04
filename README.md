@@ -36,10 +36,6 @@ python3 server.py <port>
 
 _Example: python3 server.py 12000_
 
-```bash
-python3 server.py <port>
-```
-
 Start client:
 
 ```bash
